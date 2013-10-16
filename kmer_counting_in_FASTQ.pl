@@ -52,10 +52,16 @@ close(FASTQ);
 #---- STEP2: scan through the hash to calculate metrics ----#
 $count = 0;
 $running_total = 0;
+$top_5 = "";
+$bottom_5 = "";
 foreach (sort { $HASH{$b} <=> $HASH{$a} } keys(%HASH) )
 {
         $count++;
         $running_total += $HASH{$_};
+        if($count <= 5)
+        {
+                $top_5 .= "$HASH{$_}\t$_\n";
+        }
         if($count == 10)
         {
                 $at_10 = $running_total;
@@ -73,11 +79,19 @@ foreach (sort { $HASH{$b} <=> $HASH{$a} } keys(%HASH) )
                 $at_10000 = $running_total;
         }
 }
+for($q=-1; $q>=-5; $q--)
+{
+        $bottom_key = (sort { $HASH{$b} <=> $HASH{$a} } keys(%HASH))[$q];
+        $bottom_5 .= "$HASH{$bottom_key}\t$bottom_key\n";
+}
 
 #---- STEP3: report the metrics ----#
+print "Used $0 to find kmer size $ARGV[1] metrics\n";
+print "Reads file: $ARGV[0]\n\n";
 print "Total number of reads: $reads\n";
-print "Total number of kmers: ".(keys %HASH)."\n";
+print "Total number of kmers: ".(keys %HASH)."\n\n";
 print "Top 10 kmers combined:       $at_10/$running_total:  ".sprintf("%.2f", (($at_10/$running_total)*100))."% of all kmers\n";
 print "Top 100 kmers combined:      $at_100/$running_total:  ".sprintf("%.2f", (($at_100/$running_total)*100))."% of all kmers\n";
 print "Top 1000 kmers combined:     $at_1000/$running_total:  ".sprintf("%.2f", (($at_1000/$running_total)*100))."% of all kmers\n";
 print "Top 10000 kmers combined:    $at_10000/$running_total:  ".sprintf("%.2f", (($at_10000/$running_total)*100))."% of all kmers\n";
+print "\nMost common 5 kmers:\n$top_5\nLeast common 5 kmers:\n$bottom_5\n";
